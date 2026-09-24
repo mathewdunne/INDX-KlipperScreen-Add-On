@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- INDX add-on menu icon: a mounted tool above a dock rail with two parked tools.
+     One colour that reads on dark and light themes alike. GPLv3. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <g fill="none" stroke="#f28c28" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <!-- carriage and the mounted tool -->
+    <path d="M18 6 H46" />
+    <path d="M24 6 V10 H40 V6" />
+    <path d="M25 12 H39 V26 L35 30 H29 L25 26 Z" />
+    <path d="M30 30 L32 34 L34 30" />
+    <!-- dock rail -->
+    <path d="M4 46 H60" />
+    <!-- parked tools -->
+    <path d="M6 48 H18 V58 L15 61 H9 L6 58 Z" />
+    <path d="M46 48 H58 V58 L55 61 H49 L46 58 Z" />
+    <!-- empty dock -->
+    <path d="M26 48 V52 M38 48 V52" />
+  </g>
+</svg>

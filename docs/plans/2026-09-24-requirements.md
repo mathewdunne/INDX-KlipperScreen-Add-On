@@ -110,20 +110,29 @@ not decisions. Implementation planning starts from this file.
 - README documents a Moonraker `[update_manager]` snippet. The installer does
   not write `moonraker.conf`.
 
-## Open design risks (for the implementation session)
+## Design risks, resolved in implementation (2026-09-24)
 
-- Klipper merges duplicate sections option by option (later wins), so the
-  companion cannot wrap upstream `LOAD_FILAMENT` under the same name to
-  record `fil_type`. Needs a differently named wrapper (then console
-  `LOAD_FILAMENT` doesn't record it) or a full redefinition.
-- Per-tool `variable_spool_id` via merged partial `[gcode_macro T<n>]`
-  sections: fine for tools that exist, but a partial section for a tool the
-  user doesn't have creates a macro with no `gcode:`, which is a config
-  error. The companion can't know the tool count at config time.
-- Active-spool follow lives in the fork's `_RECORD_TOOLCHANGE`. Moving it to
-  the companion needs a hook point in upstream macros.
-- Mathew's fork migration: remove the fork's copies only after the companion
-  cfg is loaded and verified, or two definitions merge silently.
+- `fil_type` on load: recorded by the differently named wrapper
+  `_INDX_LOAD_GO` (the panel's Load path), after `LOAD_FILAMENT` succeeds.
+  Console `LOAD_FILAMENT` on upstream does not record it; the tile shows `?`.
+- Per-tool `spool_id`: the companion stores `t<n>__spool_id` in
+  save_variables (Mainsail's name) and mirrors it into `T<n>.spool_id` only
+  when that variable exists. README tells users to add
+  `variable_spool_id: None` to their `T<n>`. (Mathew's choice.)
+- Active-spool follow: companion defines `_INDX_TOOLCHANGE_SPOOL TOOL=n`
+  (`-1` = nothing mounted). The fork's `_RECORD_TOOLCHANGE` and
+  `_PARK_TOOL_APPLY` call it if defined; offered upstream as a PR.
+  (Mathew's choice.)
+- **Changed from "Configurability" above:** the shipped `indx_menu.conf`
+  holds only the two entry buttons. KlipperScreen reads an `[include]`d file
+  after `KlipperScreen.conf`, so shipped `[menu indx ...]` defaults would
+  beat the user's overrides. Defaults live in `panels/indx.py`; a
+  `[menu indx <action>]` in `KlipperScreen.conf` overrides per option, read
+  from the raw config section (not `get_menu_items`, which fills missing
+  options with defaults and would clobber partial overrides). (Mathew's
+  choice.)
+- Fork migration: still pending. Remove the fork's copies only after the
+  companion cfg is loaded and verified.
 
 ## Reference facts (verified 2026-09-24)
 
