@@ -55,18 +55,34 @@ PANEL_CSS = b"""
     padding: 0 6px;
 }
 """
+# Theme accent underline, like stock buttons. Light themes get it darkened:
+# their pastel colours do not show as a thin line on a light background.
+ACCENT_CSS = """
+.indx-panel button.color{n} {{ border-bottom: 4px solid {accent}; box-shadow: none; }}
+"""
+ACCENT = {"dark": "@color{n}", "light": "shade(@color{n}, 0.72)"}
 _style_provider = None
+_style_variant = None
 
 
-def install_style():
-    global _style_provider
+def install_style(widget):
+    global _style_provider, _style_variant
+    # A theme change re-creates the panel, so this also picks up the new theme
+    found, bg = widget.get_style_context().lookup_color("bg")
+    variant = "light" if found and 0.3 * bg.red + 0.6 * bg.green + 0.1 * bg.blue > 0.5 else "dark"
+    if variant == _style_variant:
+        return
+    _style_variant = variant
+    css = PANEL_CSS.decode() + "".join(
+        ACCENT_CSS.format(n=n, accent=ACCENT[variant].format(n=n)) for n in range(1, 5)
+    )
     if _style_provider is None:
         _style_provider = Gtk.CssProvider()
-        _style_provider.load_from_data(PANEL_CSS)
         Gtk.StyleContext.add_provider_for_screen(
             Gdk.Screen.get_default(), _style_provider,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1,
         )
+    _style_provider.load_from_data(css.encode())
 
 # Defaults for each button. [menu indx <key>] in KlipperScreen.conf overrides
 # any of name, icon, method, params. A shipped conf cannot hold these: an
@@ -98,6 +114,12 @@ ACTIONS = {
     "remove": {"name": "Remove tool by hand", "icon": "arrow-down", "params": '{"script": "MANUAL_TOOL_REMOVE"}'},
     "reset": {"name": "Reset toolhead", "icon": "refresh", "params": '{"script": "MANUAL_TOOLHEAD_RESET"}'},
 }
+
+# Theme accent class per button, following the stock Extrude panel (Load 3, Unload 2)
+STYLES = {
+    "pickup": "color1", "park": "color1", "load": "color3", "unload": "color2",
+    "spool": "color4", "filament": "color4", "seat": "color3", "remove": "color2", "reset": "color4",
+}  # fmt: skip
 
 # Recovery sub-view: button order and the note under each.
 RECOVERY = [
@@ -215,7 +237,7 @@ class Panel(ScreenPanel):
     def __init__(self, screen, title, **kwargs):
         title = title or "INDX"
         super().__init__(screen, title)
-        install_style()
+        install_style(self.content)
         self.content.get_style_context().add_class("indx-panel")
         self.actions = self._load_actions()
         self.spools = {}
@@ -232,7 +254,7 @@ class Panel(ScreenPanel):
 
         self.count = small_label(xalign=1.0, dim=True)
         self.count.set_margin_end(6)
-        self.recovery = self._gtk.Button("warning", "Recovery", None, self.bts, Gtk.PositionType.LEFT, 1)
+        self.recovery = self._gtk.Button("warning", "Recovery", "color2", self.bts, Gtk.PositionType.LEFT, 1)
         self.recovery.set_hexpand(False)
         self.recovery.set_vexpand(False)
         self.recovery.connect("clicked", self._show_recovery)
@@ -274,7 +296,7 @@ class Panel(ScreenPanel):
         action = self.actions[key]
         name = action["name"].replace("{tool}", str(tool)) if tool is not None else action["name"]
         button = self._gtk.Button(
-            action["icon"], name, None, self.bts, Gtk.PositionType.LEFT, 1
+            action["icon"], name, STYLES[key], self.bts, Gtk.PositionType.LEFT, 1
         )
         return button
 

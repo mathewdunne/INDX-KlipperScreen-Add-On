@@ -113,7 +113,9 @@ grid); `back()` and `deactivate()` return to it. `refresh()`
 rebuilds tiles only when `tool_count` changes, otherwise updates in place.
 Actions are enabled only in `ready` and `paused` (view-only while printing).
 Styling is a panel-scoped CSS provider (`.indx-panel`) using theme colours
-(`@bg`, `@text`, `@active`) so it works in light and dark themes.
+(`@bg`, `@text`, `@active`) so it works in light and dark themes. Action
+buttons carry the stock `color1`..`color4` classes (`STYLES`), drawn as a
+bottom underline; `install_style` darkens it when the theme's `@bg` is light.
 
 ## Conventions
 
