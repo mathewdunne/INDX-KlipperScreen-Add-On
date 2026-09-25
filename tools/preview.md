@@ -11,7 +11,7 @@ rendering dependencies once inside Ubuntu:
 
 ```bash
 sudo apt-get update
-sudo apt-get install python3-gi python3-gi-cairo gir1.2-gtk-3.0 xvfb
+sudo apt-get install python3-gi python3-gi-cairo python3-jinja2 gir1.2-gtk-3.0 xvfb
 ```
 
 Run these commands from the repository root in PowerShell:
@@ -23,6 +23,8 @@ Run these commands from the repository root in PowerShell:
 ./tools/preview.ps1 -State printing
 ./tools/preview.ps1 -Interactive            # clickable GTK window
 ./tools/preview.ps1 -Tools 4 -Selected 2 -NoSpoolman
+./tools/preview.ps1 -View home              # 800×480 home screen, local INDX SVG
+./tools/preview.ps1 -View home -Theme material-light
 ```
 
 The launcher defaults to the adjacent `../Screen Apps/KlipperScreen` checkout;
@@ -41,3 +43,23 @@ from the printer. The target size defaults to 800×480; if the panel's minimum
 size exceeds it, the screenshot uses the actual size and reports a warning
 instead of silently scaling the UI. Macro execution, printer updates and the on-screen
 keyboard still need integration testing on the printer.
+
+## Home-screen icon preview
+
+`-View home` uses the checkout's real `main_menu` panel, default menu entries,
+temperature graph, button sizes and theme, plus this add-on's INDX menu entry.
+It reads the SVG straight from this repository; no installation or changes to
+the KlipperScreen checkout are needed. Rerun after editing the SVG.
+
+Outputs are `preview/home-z-bolt.png` and `preview/home-material-light.png`,
+so both themes can be compared. The light theme loads `icons/indx-light.svg`;
+other themes load `icons/indx.svg`, matching the installer.
+
+Use `-Width 1024 -Height 600` for another display size, or `-Interactive` to
+open the window. Home-screen controls only log an offline message. The
+temperature values are mock data, and the navigation/title bar is the same
+minimal preview shell used by the other views. A printer with custom menu
+entries, fonts or sensors can look different. `-Tools`, `-Selected`, `-State`
+and `-NoSpoolman` apply to the INDX views, not the home-screen fixture.
+
+On Linux, add `--view home --theme material-light` to the Python command above.

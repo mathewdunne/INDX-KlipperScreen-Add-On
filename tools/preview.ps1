@@ -1,6 +1,6 @@
 param(
     [switch]$Interactive,
-    [ValidateSet('main', 'spool', 'colour')][string]$View = 'main',
+    [ValidateSet('main', 'spool', 'colour', 'home')][string]$View = 'main',
     [ValidateSet('ready', 'printing', 'paused')][string]$State = 'ready',
     [ValidateRange(1, 8)][int]$Tools = 8,
     [int]$Selected = 0,
@@ -15,10 +15,11 @@ $repoPath = (Resolve-Path "$PSScriptRoot/..").Path
 $ksPath = (Resolve-Path $KlipperScreen).Path
 $linuxRepo = (wsl -d Ubuntu -- wslpath -a $repoPath).Trim()
 $linuxKS = (wsl -d Ubuntu -- wslpath -a $ksPath).Trim()
+$outputName = if ($View -eq 'home') { "home-$Theme" } else { "$View-$State" }
 $previewArgs = @('python3', "$linuxRepo/tools/preview.py", '--klipperscreen', $linuxKS,
     '--view', $View, '--state', $State, '--tools', "$Tools", '--selected', "$Selected",
     '--width', "$Width", '--height', "$Height", '--theme', $Theme,
-    '--output', "$linuxRepo/preview/$View-$State.png")
+    '--output', "$linuxRepo/preview/$outputName.png")
 if ($NoSpoolman) { $previewArgs += '--no-spoolman' }
 if ($Interactive) {
     $previewArgs += '--interactive'

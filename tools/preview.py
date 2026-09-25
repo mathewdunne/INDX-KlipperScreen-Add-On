@@ -18,7 +18,7 @@ def main():
                         default=ROOT.parent / "Screen Apps" / "KlipperScreen")
     parser.add_argument("--fixture", type=Path, default=ROOT / "tools" / "preview-state.json")
     parser.add_argument("--output", type=Path, default=ROOT / "preview" / "main.png")
-    parser.add_argument("--view", choices=("main", "spool", "colour"), default="main")
+    parser.add_argument("--view", choices=("main", "spool", "colour", "home"), default="main")
     parser.add_argument("--state", choices=("ready", "printing", "paused"), default="ready")
     parser.add_argument("--tools", type=int, choices=range(1, 9), default=8)
     parser.add_argument("--selected", type=int, default=0)
@@ -86,12 +86,17 @@ def main():
     Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), provider,
                                              Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
-    spec = importlib.util.spec_from_file_location("indx_preview_panel", ROOT / "panels" / "indx.py")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    panel = module.Panel(screen, "INDX")
-    panel.selected = args.selected
-    panel.activate()
+    if args.view == "home":
+        from preview_home import build_home
+        panel = build_home(screen, args.klipperscreen, ROOT, args.theme)
+        title.set_text("Voron — offline home preview")
+    else:
+        spec = importlib.util.spec_from_file_location("indx_preview_panel", ROOT / "panels" / "indx.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        panel = module.Panel(screen, "INDX")
+        panel.selected = args.selected
+        panel.activate()
 
     # Reserve the same action/title bar dimensions as KlippyGtk. The surrounding
     # shell is minimal; only the INDX content is the production panel.

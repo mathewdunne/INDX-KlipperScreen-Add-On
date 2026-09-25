@@ -163,12 +163,18 @@ git_unexclude() {
 
 install() {
   checks
-  local dir
+  local dir icon
   link "$addon_dir/panels/indx.py" "$klipperscreen_dir/panels/indx.py"
   mkdir -p "$klipperscreen_dir/addons"
   link "$addon_dir/addons/indx.py" "$klipperscreen_dir/addons/indx.py"
   while read -r dir; do
-    link "$addon_dir/icons/indx.svg" "$dir/indx.svg"
+    # KlipperScreen rasterizes SVGs, so GTK text colours cannot tint them.
+    # Theme-specific links let its normal icon loader choose the right variant.
+    icon=indx.svg
+    if [ "$(basename "$(dirname "$dir")")" = "material-light" ]; then
+      icon=indx-light.svg
+    fi
+    link "$addon_dir/icons/$icon" "$dir/indx.svg"
   done < <(theme_image_dirs)
   link "$addon_dir/klipperscreen/indx_menu.conf" "$printer_config/indx_menu.conf"
   configure_klipperscreen

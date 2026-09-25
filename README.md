@@ -50,6 +50,12 @@ sudo systemctl restart KlipperScreen
 
 The INDX button appears on the main menu and the print menu.
 
+The menu icon uses dark lines for `material-light` and white lines for the
+other bundled themes, keeping its maroon accents in both. After updating
+an existing installation, rerun `install.sh` once to update the theme links,
+then restart KlipperScreen. Subsequent theme changes select the matching
+icon automatically.
+
 ## The macros it uses
 
 The panel only sends G-code; Klipper owns the data. These macros are in
