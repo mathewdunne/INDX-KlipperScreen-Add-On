@@ -16,6 +16,13 @@ not decisions. Implementation planning starts from this file.
   colour and Spoolman spool.
 - Phase 2: recovery (MANUAL_TOOL_SEAT / MANUAL_TOOL_REMOVE /
   MANUAL_TOOLHEAD_RESET), top-bar active-tool badge.
+  - Recovery placement (agreed 2026-09-25): a slim footer row under the grid,
+    Recovery button bottom-left, toolchange count right. It opens a sub-view
+    (like Spool/Colour) with full-width buttons and a one-line "when to use"
+    note each: "Seat T<n> by hand" (selected tool), "Remove tool by hand",
+    "Reset toolhead". Each an overridable `[menu indx <action>]` entry. Park
+    stays in the action grid. Open: whether Reset gets a confirm dialog, the
+    one exception to "no confirmation dialogs".
 - Never: calibration (Mainsail/console only), tool remapping (slicer tool =
   physical dock).
 
@@ -34,10 +41,12 @@ not decisions. Implementation planning starts from this file.
     details. No "Loaded" label: showing a material means loaded;
   - the mounted tool carries a badge.
 - Right: the selected tool expanded, with its actions.
-- Shared: Park button and toolchange count (`toolchange_count`). Nothing else
-  global.
+- Shared: toolchange count (`toolchange_count`) under the grid. Nothing else
+  global in v1.
 - Per-tool actions:
-  - Pick up (`T<n>`), disabled on the mounted tool;
+  - Pick up (`T<n>`); on the mounted tool the same button is Park
+    (`PARK_TOOL`) instead (2026-09-25, replaced a separate Park button under
+    the grid);
   - Load and Unload as two separate buttons, always shown, so a bad load or
     unload can be run again;
   - Assign spool;

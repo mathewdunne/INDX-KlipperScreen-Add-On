@@ -8,6 +8,7 @@
 
 import json
 import logging
+import math
 
 import gi
 
@@ -38,6 +39,13 @@ PANEL_CSS = b"""
     border: 1px solid alpha(@text, 0.09);
 }
 .indx-panel .indx-info { padding: 6px 6px 10px; }
+.indx-panel .indx-dim { opacity: 0.7; }
+.indx-panel .indx-badge {
+    background-color: #2e7d32;
+    color: #ffffff;
+    border-radius: 5px;
+    padding: 0 6px;
+}
 """
 _style_provider = None
 
@@ -105,22 +113,36 @@ def spool_id_line(spool_id, spool):
     return f"#{spool_id}" if weight is None else f"#{spool_id} · {weight:.0f} g"
 
 
+def rounded_rect(ctx, x, y, w, h, r):
+    r = min(r, w / 2, h / 2)
+    ctx.new_sub_path()
+    ctx.arc(x + w - r, y + r, r, -math.pi / 2, 0)
+    ctx.arc(x + w - r, y + h - r, r, 0, math.pi / 2)
+    ctx.arc(x + r, y + h - r, r, math.pi / 2, math.pi)
+    ctx.arc(x + r, y + r, r, math.pi, 3 * math.pi / 2)
+    ctx.close_path()
+
+
 def draw_swatch(area, ctx, holder):
     w, h = area.get_allocated_width(), area.get_allocated_height()
+    if holder.get("square"):
+        side = min(w, h)
+        ctx.translate((w - side) / 2, (h - side) / 2)
+        w = h = side
     rgba = Gdk.RGBA()
     if holder.get("color") and rgba.parse(f"#{holder['color']}"):
+        rounded_rect(ctx, 0.5, 0.5, w - 1, h - 1, 4)
         ctx.set_source_rgb(rgba.red, rgba.green, rgba.blue)
-        ctx.rectangle(0, 0, w, h)
         ctx.fill_preserve()
-        ctx.set_source_rgb(0.5, 0.5, 0.5)
+        ctx.set_source_rgba(0.5, 0.5, 0.5, 0.6)
         ctx.set_line_width(1)
         ctx.stroke()
     else:
         # No colour known: dashed outline
+        rounded_rect(ctx, 1, 1, w - 2, h - 2, 4)
         ctx.set_source_rgb(0.5, 0.5, 0.5)
         ctx.set_line_width(2)
         ctx.set_dash([4, 4])
-        ctx.rectangle(1, 1, w - 2, h - 2)
         ctx.stroke()
 
 
@@ -131,8 +153,24 @@ def swatch(holder, height, width=-1):
     return area
 
 
-def small_label(lines=1, xalign=0.0):
+def badge(text):
+    label = Gtk.Label(no_show_all=True, valign=Gtk.Align.CENTER)
+    label.set_markup(f"<small><b>{text}</b></small>")
+    label.get_style_context().add_class("indx-badge")
+    return label
+
+
+def section_label(text):
+    label = Gtk.Label(xalign=0, margin_top=4)
+    label.set_markup(f"<small><b>{text.upper()}</b></small>")
+    label.get_style_context().add_class("indx-dim")
+    return label
+
+
+def small_label(lines=1, xalign=0.0, dim=False):
     label = Gtk.Label(xalign=xalign, hexpand=True)
+    if dim:
+        label.get_style_context().add_class("indx-dim")
     label.set_ellipsize(Pango.EllipsizeMode.END)
     # Let the parent allocate the width instead of requesting the full text.
     # Multiline spool names otherwise widen every column in the tool grid.
@@ -161,16 +199,12 @@ class Panel(ScreenPanel):
         self.grid = Gtk.Grid(row_homogeneous=True, column_homogeneous=True, hexpand=True, vexpand=True)
         self.side = self._build_side()
 
-        self.park = self._action_button("park")
-        self.park.connect("clicked", self._run, "park")
-        self.count = Gtk.Label(xalign=0, hexpand=True)
-        bottom = Gtk.Box(spacing=5)
-        bottom.pack_start(self.park, False, False, 0)
-        bottom.pack_start(self.count, True, True, 5)
+        self.count = small_label(xalign=1.0, dim=True)
+        self.count.set_margin_end(6)
 
         left = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, hexpand=True, vexpand=True)
         left.pack_start(self.grid, True, True, 0)
-        left.pack_start(bottom, False, False, 0)
+        left.pack_start(self.count, False, False, 2)
 
         vertical = self._screen.vertical_mode
         self.main = Gtk.Box(
@@ -236,28 +270,41 @@ class Panel(ScreenPanel):
 
     def _build_side(self):
         side = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2, hexpand=False)
-        self.side_title = small_label(lines=2)
+        self.side_title = Gtk.Label(xalign=0)
+        self.side_badge = badge("ON HEAD")
+        header = Gtk.Box(spacing=8)
+        header.pack_start(self.side_title, False, False, 0)
+        header.pack_start(self.side_badge, False, False, 0)
+        self.side_note = small_label(dim=True)
+        self.side_note.set_no_show_all(True)
+        self.side_note.set_markup("<small>View only while printing</small>")
         self.side_color = {}
         self.side_material = small_label()
-        self.side_detail = small_label(lines=3)
+        self.side_detail = small_label(lines=3, dim=True)
         info = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
         info.get_style_context().add_class("indx-info")
-        info.pack_start(self.side_title, False, False, 0)
+        info.pack_start(header, False, False, 0)
+        info.pack_start(self.side_note, False, False, 0)
         info.pack_start(swatch(self.side_color, self._gtk.font_size), False, False, 0)
         info.pack_start(self.side_material, False, False, 0)
         info.pack_start(self.side_detail, False, False, 0)
 
         self.buttons = {}
-        for key in ("pickup", "load", "unload", "spool", "filament"):
+        for key in ("pickup", "park", "load", "unload", "spool", "filament"):
             self.buttons[key] = self._action_button(key)
         self.buttons["pickup"].connect("clicked", self._run, "pickup")
+        self.buttons["park"].connect("clicked", self._run, "park")
         self.buttons["load"].connect("clicked", self._run, "load")
         self.buttons["unload"].connect("clicked", self._run, "unload")
         self.buttons["spool"].connect("clicked", self._show_spools)
         self.buttons["filament"].connect("clicked", self._show_filament)
 
         grid = Gtk.Grid(row_homogeneous=True, column_homogeneous=True, vexpand=True)
-        grid.attach(self.buttons["pickup"], 0, 0, 2, 1)
+        # Pick up and Park share a cell; _update_side shows one of them.
+        for key in ("pickup", "park"):
+            self.buttons[key].show_all()
+            self.buttons[key].set_no_show_all(True)
+            grid.attach(self.buttons[key], 0, 0, 2, 1)
         grid.attach(self.buttons["load"], 0, 1, 1, 1)
         grid.attach(self.buttons["unload"], 1, 1, 1, 1)
         grid.attach(self.buttons["spool"], 0, 2, 1, 1)
@@ -275,11 +322,15 @@ class Panel(ScreenPanel):
         for n in range(self.tool_count):
             tile = {"color": None}
             tile["title"] = Gtk.Label(xalign=0, hexpand=True)
+            tile["badge"] = badge("ON")
             tile["material"] = small_label()
-            tile["detail"] = small_label(lines=2)
-            tile["meta"] = small_label()
+            tile["detail"] = small_label(lines=2, dim=True)
+            tile["meta"] = small_label(dim=True)
+            header = Gtk.Box()
+            header.pack_start(tile["title"], True, True, 0)
+            header.pack_end(tile["badge"], False, False, 0)
             box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5, valign=Gtk.Align.START)
-            box.pack_start(tile["title"], False, False, 0)
+            box.pack_start(header, False, False, 0)
             box.pack_start(swatch(tile, self._gtk.font_size), False, False, 0)
             box.pack_start(tile["material"], False, False, 0)
             box.pack_start(tile["detail"], False, False, 0)
@@ -314,15 +365,10 @@ class Panel(ScreenPanel):
             self._update_tile(n, tile, self._tool(n))
         self._update_side()
         self.count.set_markup(f"<small>Toolchanges: {svv.get('toolchange_count', 0)}</small>")
-        self.park.set_sensitive(self._can_act() and svv.get("active_tool", -1) != -1)
 
     def _update_tile(self, n, tile, tool):
-        badge = (
-            ' <span background="#2e7d32" foreground="#ffffff"><b> ON </b></span>'
-            if tool["mounted"]
-            else ""
-        )
-        tile["title"].set_markup(f"<b>T{n}</b>{badge}")
+        tile["title"].set_markup(f"<b>T{n}</b>")
+        tile["badge"].set_visible(tool["mounted"])
         ctx = tile["button"].get_style_context()
         if n == self.selected:
             ctx.add_class("button_active")
@@ -353,9 +399,9 @@ class Panel(ScreenPanel):
         n = self.selected
         tool = self._tool(n)
         state = self._printer.state
-        note = "\n<small>(view only while printing)</small>" if state == "printing" else ""
-        mounted = " <small>on the head</small>" if tool["mounted"] else ""
-        self.side_title.set_markup(f"<big><b>T{n}</b></big>{mounted}{note}")
+        self.side_title.set_markup(f"<big><b>T{n}</b></big>")
+        self.side_badge.set_visible(tool["mounted"])
+        self.side_note.set_visible(state == "printing")
         if tool["loaded"]:
             self.side_color["color"] = tool["color"]
             self.side_material.set_markup(f"<b>{esc(tool['material'] or 'Unknown material')}</b>")
@@ -367,7 +413,10 @@ class Panel(ScreenPanel):
         self.side.queue_draw()
 
         can = self._can_act()
-        self.buttons["pickup"].set_sensitive(can and not tool["mounted"])
+        self.buttons["pickup"].set_visible(not tool["mounted"])
+        self.buttons["park"].set_visible(tool["mounted"])
+        self.buttons["pickup"].set_sensitive(can)
+        self.buttons["park"].set_sensitive(can)
         for key in ("load", "unload", "filament"):
             self.buttons[key].set_sensitive(can)
         self.buttons["spool"].set_sensitive(can and self._printer.spoolman)
@@ -514,7 +563,7 @@ class Panel(ScreenPanel):
             label.set_ellipsize(Pango.EllipsizeMode.END)
             label.set_markup(
                 f"<b>{esc(spool_title(spool) or 'Spool')}</b>  {esc(fil.get('material') or '')}\n"
-                f"<small>{esc(spool_id_line(spool['id'], spool))}</small>"
+                f"<small><span alpha='70%'>{esc(spool_id_line(spool['id'], spool))}</span></small>"
             )
             row = Gtk.Box(spacing=10)
             row.pack_start(swatch(holder, self._gtk.font_size * 2, self._gtk.font_size * 2), False, False, 0)
@@ -553,6 +602,7 @@ class Panel(ScreenPanel):
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
         if tool["spool_id"]:
             note = Gtk.Label(xalign=0, wrap=True)
+            note.get_style_context().add_class("indx-dim")
             note.set_markup(
                 f"<small>Spool #{tool['spool_id']} supplies the material and colour. "
                 "These choices apply when it is unassigned.</small>"
@@ -567,6 +617,7 @@ class Panel(ScreenPanel):
         mat_grid = Gtk.Grid(column_homogeneous=True)
         for i, material in enumerate(materials):
             button = self._gtk.Button(None, material, None, self.bts, Gtk.PositionType.LEFT, 1)
+            button.set_vexpand(False)
             button.connect("clicked", self._pick, choice, "material", material, mat_buttons)
             mat_buttons[material] = button
             mat_grid.attach(button, i % 4, i // 4, 1, 1)
@@ -575,7 +626,7 @@ class Panel(ScreenPanel):
         color_grid = Gtk.Grid(column_homogeneous=True, row_homogeneous=True, vexpand=True)
         for i, color in enumerate(PALETTE):
             button = self._gtk.Button()
-            button.add(swatch({"color": color}, self._gtk.font_size * 2))
+            button.add(swatch({"color": color, "square": True}, self._gtk.font_size * 2))
             button.connect("clicked", self._pick, choice, "color", color, color_buttons)
             color_buttons[color] = button
             color_grid.attach(button, i % 8, i // 8, 1, 1)
@@ -584,9 +635,9 @@ class Panel(ScreenPanel):
         apply.set_vexpand(False)
         apply.connect("clicked", self._apply_filament, choice)
 
-        box.pack_start(Gtk.Label(label="Material", xalign=0), False, False, 0)
+        box.pack_start(section_label("Material"), False, False, 0)
         box.pack_start(mat_grid, False, False, 0)
-        box.pack_start(Gtk.Label(label="Colour", xalign=0), False, False, 0)
+        box.pack_start(section_label("Colour"), False, False, 0)
         box.pack_start(color_grid, True, True, 0)
         box.pack_start(apply, False, False, 0)
         self._mark(mat_buttons, choice["material"])

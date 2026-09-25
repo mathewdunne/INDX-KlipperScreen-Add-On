@@ -10,8 +10,9 @@ Out of tree: stock KlipperScreen, no fork.
 - Each tile shows the filament colour and material, and the Spoolman spool
   (name, ID, remaining weight) when one is assigned. The mounted tool
   carries an **ON** badge.
-- The selected tool's actions: Pick up, Load, Unload, Spool, Colour. Park
-  and the toolchange count sit under the grid.
+- The selected tool's actions: Pick up, Load, Unload, Spool, Colour. Pick up
+  becomes Park when the selected tool is the mounted one. The toolchange
+  count sits under the grid.
 - View only while printing; everything works while paused.
 - When a load finishes, the screen opens the Spool picker for that tool,
   or the Colour picker without Spoolman. Back skips it.
