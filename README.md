@@ -25,7 +25,12 @@ Out of tree: stock KlipperScreen, no fork.
   there. `[save_variables]` and `[respond]`, as INDX already requires.
 - Optional: Moonraker's `[spoolman]` component, for spool assignment.
 
-## Install
+## Local UI preview
+
+Render screenshots or open a clickable GTK preview with mock printer data.
+See [setup and usage](tools/preview.md).
+
+## Install on the printer
 
 ```bash
 cd ~ && git clone https://github.com/mathewdunne/INDX-KlipperScreen-Add-On.git

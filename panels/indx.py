@@ -101,8 +101,12 @@ def swatch(holder, height, width=-1):
 def small_label(lines=1, xalign=0.0):
     label = Gtk.Label(xalign=xalign, hexpand=True)
     label.set_ellipsize(Pango.EllipsizeMode.END)
+    # Let the parent allocate the width instead of requesting the full text.
+    # Multiline spool names otherwise widen every column in the tool grid.
+    label.set_max_width_chars(1)
     if lines > 1:
         label.set_line_wrap(True)
+        label.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR)
         label.set_lines(lines)
     return label
 
@@ -196,7 +200,7 @@ class Panel(ScreenPanel):
 
     def _build_side(self):
         side = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
-        self.side_title = Gtk.Label(xalign=0)
+        self.side_title = small_label(lines=2)
         self.side_color = {}
         self.side_material = small_label()
         self.side_detail = small_label(lines=3)
@@ -310,7 +314,7 @@ class Panel(ScreenPanel):
         n = self.selected
         tool = self._tool(n)
         state = self._printer.state
-        note = " <small>(view only while printing)</small>" if state == "printing" else ""
+        note = "\n<small>(view only while printing)</small>" if state == "printing" else ""
         mounted = " <small>on the head</small>" if tool["mounted"] else ""
         self.side_title.set_markup(f"<big><b>T{n}</b></big>{mounted}{note}")
         if tool["loaded"]:

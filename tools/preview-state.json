@@ -1,0 +1,25 @@
+{
+  "save_variables": {
+    "variables": {
+      "active_tool": 0,
+      "toolchange_count": 142,
+      "t0_fil_density": 1.24, "t0_fil_type": "PLA", "t0_fil_color": "E53935", "t0__spool_id": 12,
+      "t1_fil_density": 1.27, "t1_fil_type": "PETG", "t1_fil_color": "1E88E5", "t1__spool_id": 23,
+      "t2_fil_density": 1.04, "t2_fil_type": "ABS", "t2_fil_color": "FDD835",
+      "t3_fil_density": null,
+      "t4_fil_density": 1.24, "t4_fil_type": "PLA", "t4_fil_color": "43A047", "t4__spool_id": 31,
+      "t5_fil_density": 1.07, "t5_fil_type": "ASA", "t5_fil_color": "FFFFFF",
+      "t6_fil_density": null,
+      "t7_fil_density": 1.21, "t7_fil_type": "TPU", "t7_fil_color": "8E24AA"
+    }
+  },
+  "gcode_macro LOAD_FILAMENT": {
+    "filament_presets": {"PLA": {}, "PETG": {}, "ABS": {}, "ASA": {}, "TPU": {}, "PA": {}}
+  },
+  "spools": [
+    {"id": 12, "remaining_weight": 684, "filament": {"name": "Signal Red", "material": "PLA", "color_hex": "E53935", "vendor": {"name": "Polymaker"}}},
+    {"id": 23, "remaining_weight": 312, "filament": {"name": "Ocean Blue", "material": "PETG", "color_hex": "1E88E5", "vendor": {"name": "Prusament"}}},
+    {"id": 31, "remaining_weight": 905, "filament": {"name": "Forest Green", "material": "PLA", "color_hex": "43A047", "vendor": {"name": "eSUN"}}},
+    {"id": 40, "archived": true, "remaining_weight": 0, "filament": {"name": "Archived spool", "material": "PLA", "color_hex": "000000"}}
+  ]
+}
