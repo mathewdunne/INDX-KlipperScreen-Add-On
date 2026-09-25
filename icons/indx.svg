@@ -1,21 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- INDX add-on menu icon: the INDX head and two docked tools on the rail.
-     White shapes and rail, maroon swirls, transparent background. GPLv3. -->
+<!-- INDX add-on menu icon: the INDX head (mounted tool solid) and two docked
+     tools (hollow) on the rail. White shapes and rail, maroon swirls,
+     transparent background. GPLv3. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="64" height="64">
 <defs>
 <path id="head-tool" d="M 108 44 H 148 V 158 L 174 192 V 390 L 150 424 H 106 L 82 390 V 192 L 108 158 Z"/>
 <path id="dock-tool" d="M -17 0 H 17 V 36 L 38 68 V 222 L 20 252 V 288 H -20 V 252 L -38 222 V 68 L -17 36 Z"/>
+<path id="dock-hollow" d="M -9 60 H 9 L 24 80 V 214 L 10 236 H -10 L -24 214 V 80 Z"/>
 <mask id="gap" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
 <rect width="512" height="512" fill="#fff"/>
 <use href="#head-tool" fill="#000" stroke="#000" stroke-width="72" stroke-linejoin="round"/>
 </mask>
+<mask id="hollow" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+<rect width="512" height="512" fill="#fff"/>
+<use href="#dock-hollow" x="312" y="156" fill="#000"/>
+<use href="#dock-hollow" x="436" y="156" fill="#000"/>
+</mask>
 </defs>
 <g fill="#fff" stroke="#fff" stroke-linejoin="round">
 <path d="M 52 124 H 204 L 226 156 V 408 L 184 466 H 72 L 30 408 V 156 Z" fill="none" stroke-width="28" mask="url(#gap)"/>
-<g stroke-width="16">
+<g stroke-width="28">
 <use href="#head-tool"/>
+<g mask="url(#hollow)">
 <use href="#dock-tool" x="312" y="156"/>
 <use href="#dock-tool" x="436" y="156"/>
+</g>
 </g>
 <g stroke="none">
 <rect x="0" y="274" width="18" height="48" rx="6"/>
