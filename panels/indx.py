@@ -108,7 +108,7 @@ def small_label(lines=1, xalign=0.0):
 
 
 class Panel(ScreenPanel):
-    def __init__(self, screen, title):
+    def __init__(self, screen, title, **kwargs):
         title = title or "INDX"
         super().__init__(screen, title)
         self.actions = self._load_actions()
@@ -335,6 +335,12 @@ class Panel(ScreenPanel):
         self.refresh()
         self._fetch_spools()
 
+    def set_extra(self, extra=None, **kwargs):
+        # show_panel("indx", extra=tool) from addons/indx.py after a load. Idle,
+        # because show_panel calls this before attaching, which resets the title.
+        if extra is not None:
+            GLib.idle_add(self.pick_filament, int(extra))
+
     def deactivate(self):
         if self.subview is not None:
             self._show_main()
@@ -407,6 +413,21 @@ class Panel(ScreenPanel):
         self.refresh()
 
     # ----- sub-views -----
+
+    def pick_filament(self, tool):
+        """After a load: the spool picker for tool, or the colour picker without Spoolman."""
+        self.selected = tool
+        if not self._printer.spoolman:
+            self._show_filament(None)
+            return
+
+        def got(spools):
+            # Reloaded so a spool just added in Spoolman is listed
+            self._got_spools(spools)
+            if self.selected == tool:
+                self._show_spools(None)
+
+        self._screen.spoolman_api.load_all_spools(allow_archived=True, callback=got)
 
     def _show(self, widget, name=None):
         for child in self.content.get_children():

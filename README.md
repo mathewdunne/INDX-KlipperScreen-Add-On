@@ -13,6 +13,8 @@ Out of tree: stock KlipperScreen, no fork.
 - The selected tool's actions: Pick up, Load, Unload, Spool, Colour. Park
   and the toolchange count sit under the grid.
 - View only while printing; everything works while paused.
+- When a load finishes, the screen opens the Spool picker for that tool,
+  or the Colour picker without Spoolman. Back skips it.
 
 ## Requirements
 
@@ -55,6 +57,7 @@ the fork's `indx-cal.cfg`:
 | `INDX_SET_FILAMENT TOOL= [MATERIAL=] [COLOR=]` | Material and colour by hand, shown when no spool is assigned |
 | `INDX_LOAD`, `INDX_UNLOAD`, `INDX_TOGGLE TOOL=` | Tool and material pickers as Klipper prompts; work in Mainsail too |
 | `_INDX_LOAD_PICK TOOL=` | The panel's Load: asks for the material, then runs `LOAD_FILAMENT` |
+| `_LOAD_FILAMENT_FEED` | The feed after `LOAD_FILAMENT`'s Continue button; ends with `action:indx_loaded <tool>`, which opens the picker |
 | `_INDX_TOOLCHANGE_SPOOL TOOL=` | Called by the toolchange macros so Moonraker's active spool follows the mounted tool |
 
 Per-tool state lives in `save_variables`: `t<n>_fil_density` (set by

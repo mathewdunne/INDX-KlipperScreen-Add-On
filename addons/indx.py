@@ -6,6 +6,11 @@
 # save_variables and gcode_macro TOOL_POSITIONS, so add them to that
 # subscription. The initial values already arrive with KlipperScreen's
 # query of every object at connect; only the updates were missing.
+#
+# Also opens the spool (or colour) picker when a load finishes:
+# _LOAD_FILAMENT_FEED ends with "action:indx_loaded <tool>". KlipperScreen
+# never passes action lines to panels, and ks_show does nothing when the
+# panel is already on screen, so the action is caught here.
 
 import logging
 
@@ -35,3 +40,20 @@ def init(screen):
 
     screen.ws_subscribe = ws_subscribe
     logging.info("INDX: save_variables added to the subscription")
+
+    process_action = screen.process_action
+
+    def indx_process_action(action):
+        if not action.startswith("indx_loaded"):
+            return process_action(action)
+        try:
+            tool = int(action.split()[1])
+        except (IndexError, ValueError):
+            logging.warning(f"INDX: bad action {action!r}")
+            return
+        if screen._cur_panels and screen._cur_panels[-1] == "indx":
+            screen.panels["indx"].pick_filament(tool)
+        else:
+            screen.show_panel("indx", extra=tool)
+
+    screen.process_action = indx_process_action
