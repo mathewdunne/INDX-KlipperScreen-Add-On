@@ -17,7 +17,6 @@ from gi.repository import Gdk, GLib, Gtk, Pango
 from ks_includes.screen_panel import ScreenPanel
 
 MAX_TOOLS = 8
-COLUMNS = 4
 
 # Defaults for each button. [menu indx <key>] in KlipperScreen.conf overrides
 # any of name, icon, method, params. A shipped conf cannot hold these: an
@@ -239,6 +238,8 @@ class Panel(ScreenPanel):
         for child in self.grid.get_children():
             self.grid.remove(child)
         self.tiles = []
+        # One row up to 3 tools, then two rows: 4 -> 2x2, 6 -> 3x2, 8 -> 4x2.
+        columns = self.tool_count if self.tool_count <= 3 else (self.tool_count + 1) // 2
         for n in range(self.tool_count):
             tile = {"color": None}
             tile["title"] = Gtk.Label(xalign=0, hexpand=True)
@@ -253,7 +254,7 @@ class Panel(ScreenPanel):
             button.add(box)
             button.connect("clicked", self._select, n)
             tile["button"] = button
-            self.grid.attach(button, n % COLUMNS, n // COLUMNS, 1, 1)
+            self.grid.attach(button, n % columns, n // columns, 1, 1)
             self.tiles.append(tile)
         self.grid.show_all()
 
