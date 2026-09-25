@@ -18,6 +18,40 @@ from ks_includes.screen_panel import ScreenPanel
 
 MAX_TOOLS = 8
 
+# Scoped to this panel; use the host theme's colours for light/dark support.
+PANEL_CSS = b"""
+.indx-panel button {
+    background-color: mix(@bg, @text, 0.035);
+    border: 1px solid alpha(@text, 0.14);
+    border-radius: 8px;
+    padding: 6px;
+    margin: 3px;
+}
+.indx-panel button.button_active {
+    background-color: @active;
+    border-color: alpha(@text, 0.8);
+}
+.indx-panel button:active {
+    background-color: @active;
+}
+.indx-panel button:disabled {
+    border: 1px solid alpha(@text, 0.09);
+}
+.indx-panel .indx-info { padding: 6px 6px 10px; }
+"""
+_style_provider = None
+
+
+def install_style():
+    global _style_provider
+    if _style_provider is None:
+        _style_provider = Gtk.CssProvider()
+        _style_provider.load_from_data(PANEL_CSS)
+        Gtk.StyleContext.add_provider_for_screen(
+            Gdk.Screen.get_default(), _style_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1,
+        )
+
 # Defaults for each button. [menu indx <key>] in KlipperScreen.conf overrides
 # any of name, icon, method, params. A shipped conf cannot hold these: an
 # included file is read after KlipperScreen.conf and would win over the user.
@@ -114,6 +148,8 @@ class Panel(ScreenPanel):
     def __init__(self, screen, title, **kwargs):
         title = title or "INDX"
         super().__init__(screen, title)
+        install_style()
+        self.content.get_style_context().add_class("indx-panel")
         self.actions = self._load_actions()
         self.spools = {}
         self.tool_count = 0
@@ -142,7 +178,7 @@ class Panel(ScreenPanel):
             spacing=5,
         )
         self.main.pack_start(left, True, True, 0)
-        self.main.pack_start(self.side, not vertical, True, 0)
+        self.main.pack_start(self.side, False, True, 0)
         if not vertical:
             self.side.set_size_request(int(self._gtk.content_width * 0.36), -1)
         self.content.add(self.main)
@@ -162,11 +198,12 @@ class Panel(ScreenPanel):
             actions[key] = action
         return actions
 
-    def _action_button(self, key, style=None):
+    def _action_button(self, key):
         action = self.actions[key]
-        return self._gtk.Button(
-            action["icon"], action["name"], style, self.bts, Gtk.PositionType.LEFT, 1
+        button = self._gtk.Button(
+            action["icon"], action["name"], None, self.bts, Gtk.PositionType.LEFT, 1
         )
+        return button
 
     # ----- printer state -----
 
@@ -198,26 +235,21 @@ class Panel(ScreenPanel):
     # ----- layout -----
 
     def _build_side(self):
-        side = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        side = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2, hexpand=False)
         self.side_title = small_label(lines=2)
         self.side_color = {}
         self.side_material = small_label()
         self.side_detail = small_label(lines=3)
-        info = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2, vexpand=True)
+        info = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+        info.get_style_context().add_class("indx-info")
         info.pack_start(self.side_title, False, False, 0)
-        info.pack_start(swatch(self.side_color, self._gtk.font_size * 2), False, False, 0)
+        info.pack_start(swatch(self.side_color, self._gtk.font_size), False, False, 0)
         info.pack_start(self.side_material, False, False, 0)
         info.pack_start(self.side_detail, False, False, 0)
 
         self.buttons = {}
-        for key, style in (
-            ("pickup", "color1"),
-            ("load", "color2"),
-            ("unload", "color3"),
-            ("spool", "color4"),
-            ("filament", "color1"),
-        ):
-            self.buttons[key] = self._action_button(key, style)
+        for key in ("pickup", "load", "unload", "spool", "filament"):
+            self.buttons[key] = self._action_button(key)
         self.buttons["pickup"].connect("clicked", self._run, "pickup")
         self.buttons["load"].connect("clicked", self._run, "load")
         self.buttons["unload"].connect("clicked", self._run, "unload")
@@ -245,11 +277,13 @@ class Panel(ScreenPanel):
             tile["title"] = Gtk.Label(xalign=0, hexpand=True)
             tile["material"] = small_label()
             tile["detail"] = small_label(lines=2)
-            box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2, valign=Gtk.Align.START)
+            tile["meta"] = small_label()
+            box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5, valign=Gtk.Align.START)
             box.pack_start(tile["title"], False, False, 0)
-            box.pack_start(swatch(tile, self._gtk.font_size * 1.5), False, False, 0)
+            box.pack_start(swatch(tile, self._gtk.font_size), False, False, 0)
             box.pack_start(tile["material"], False, False, 0)
             box.pack_start(tile["detail"], False, False, 0)
+            box.pack_start(tile["meta"], False, False, 0)
             button = self._gtk.Button()
             button.add(box)
             button.connect("clicked", self._select, n)
@@ -298,10 +332,14 @@ class Panel(ScreenPanel):
             tile["color"] = None
             tile["material"].set_markup("<i>Unloaded</i>")
             tile["detail"].set_text("")
+            tile["meta"].set_text("")
         else:
             tile["color"] = tool["color"]
             tile["material"].set_markup(f"<b>{esc(tool['material'] or '?')}</b>")
-            tile["detail"].set_markup(self._spool_markup(tool))
+            title = spool_title(tool["spool"]) if tool["spool"] else ""
+            tile["detail"].set_markup(f"<small>{esc(title)}</small>")
+            meta = spool_id_line(tool["spool_id"], tool["spool"]) if tool["spool_id"] else ""
+            tile["meta"].set_markup(f"<small>{esc(meta)}</small>")
         tile["button"].queue_draw()
 
     def _spool_markup(self, tool):
@@ -450,7 +488,7 @@ class Panel(ScreenPanel):
 
     def _show_spools(self, widget):
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
-        entry = Gtk.Entry(hexpand=True, placeholder_text="Search")
+        entry = Gtk.Entry(hexpand=True, placeholder_text="Search spools")
         entry.connect("button-press-event", self._screen.show_keyboard)
         entry.connect("touch-event", self._screen.show_keyboard)
         unassign = self._gtk.Button("cancel", "Unassign", "color2", self.bts, Gtk.PositionType.LEFT, 1)
@@ -516,8 +554,8 @@ class Panel(ScreenPanel):
         if tool["spool_id"]:
             note = Gtk.Label(xalign=0, wrap=True)
             note.set_markup(
-                f"<small>Spool #{tool['spool_id']} is assigned and wins. "
-                "These values show again when it is unassigned.</small>"
+                f"<small>Spool #{tool['spool_id']} supplies the material and colour. "
+                "These choices apply when it is unassigned.</small>"
             )
             box.pack_start(note, False, False, 0)
 
