@@ -347,7 +347,7 @@ class Panel(ScreenPanel):
 
     def refresh(self):
         self.last_state = self._printer.state
-        count =self._printer.get_stat("gcode_macro TOOL_POSITIONS", "tool_count")
+        count = self._printer.get_stat("gcode_macro TOOL_POSITIONS", "tool_count")
         count = max(0, min(int(count or 0), MAX_TOOLS))
         if count != self.tool_count:
             self.tool_count = count
