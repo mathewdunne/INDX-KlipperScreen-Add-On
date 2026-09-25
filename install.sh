@@ -3,7 +3,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 #
-# Links the panel, add-on, icon, menu conf and companion cfg into place,
+# Links the panel, add-on, icon and menu conf into place,
 # includes the menu conf from KlipperScreen.conf and sets enable_addons.
 # Never touches printer.cfg or moonraker.conf. install.sh -u reverses it.
 
@@ -16,7 +16,6 @@ uninstall=false
 
 marker="# added by INDX add-on install.sh"
 include_line="[include indx_menu.conf]"
-companion_include="[include indx_companion.cfg]"
 exclude_paths=("panels/indx.py" "addons/indx.py" "styles/*/images/indx.svg")
 
 info() { echo "[INFO] $*"; }
@@ -69,11 +68,6 @@ theme_image_dirs() {
 }
 
 conf_file() { echo "$printer_config/KlipperScreen.conf"; }
-
-# Is the companion cfg included from an uncommented line of the printer config?
-companion_included() {
-  grep -Eqs '^[[:space:]]*\[include indx_companion\.cfg\]' "$printer_config"/*.cfg
-}
 
 # Insert lines, each after a "$marker" line, before the auto-generated block
 # (or at the end)
@@ -177,27 +171,15 @@ install() {
     link "$addon_dir/icons/indx.svg" "$dir/indx.svg"
   done < <(theme_image_dirs)
   link "$addon_dir/klipperscreen/indx_menu.conf" "$printer_config/indx_menu.conf"
-  link "$addon_dir/klipper/indx_companion.cfg" "$printer_config/indx_companion.cfg"
   configure_klipperscreen
   git_exclude
 
   echo
-  info "Installed. Two steps left:"
-  if companion_included; then
-    info "  1. $companion_include is already in your config."
-  else
-    info "  1. Add this line to printer.cfg, after the INDX includes, then RESTART Klipper:"
-    info "       $companion_include"
-  fi
-  info "  2. Restart KlipperScreen: sudo systemctl restart KlipperScreen"
+  info "Installed. Restart KlipperScreen: sudo systemctl restart KlipperScreen"
 }
 
 uninstall() {
   [ "$EUID" -ne 0 ] || die "Do not run this as root."
-  # Klipper would refuse to start with an include that points nowhere
-  if companion_included; then
-    die "Remove $companion_include from your printer config and RESTART Klipper first."
-  fi
   local dir
   unlink_ours "$klipperscreen_dir/panels/indx.py"
   unlink_ours "$klipperscreen_dir/addons/indx.py"
@@ -207,7 +189,6 @@ uninstall() {
   done < <(theme_image_dirs)
   unconfigure_klipperscreen
   unlink_ours "$printer_config/indx_menu.conf"
-  unlink_ours "$printer_config/indx_companion.cfg"
   git_unexclude
   info "Uninstalled. enable_addons was removed only if this installer added it."
   info "Restart KlipperScreen: sudo systemctl restart KlipperScreen"

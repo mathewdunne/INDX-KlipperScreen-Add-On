@@ -18,8 +18,9 @@ Out of tree: stock KlipperScreen, no fork.
 
 - KlipperScreen with add-on support: commit `8abe645c` (PR #1770,
   2026-09-13) or newer. `install.sh` checks.
-- Bondtech INDX macros (`indx/*.cfg`), with `[save_variables]` and
-  `[respond]` as INDX already requires.
+- The INDX macros from [mathewdunne/INDX](https://github.com/mathewdunne/INDX)
+  (`indx/*.cfg`), not upstream Bondtech: the macros the panel runs live
+  there. `[save_variables]` and `[respond]`, as INDX already requires.
 - Optional: Moonraker's `[spoolman]` component, for spool assignment.
 
 ## Install
@@ -31,68 +32,21 @@ cd ~ && git clone https://github.com/mathewdunne/INDX-KlipperScreen-Add-On.git
 ~/INDX-KlipperScreen-Add-On/install.sh
 ```
 
-The installer symlinks the panel, the add-on, the menu icon, the menu conf
-and the companion macros into place, adds `[include indx_menu.conf]` and
-`enable_addons: True` to `KlipperScreen.conf`, and hides its files from
-KlipperScreen's `git status`. It never edits `printer.cfg`. Then:
+The installer symlinks the panel, the add-on, the menu icon and the menu
+conf into place, adds `[include indx_menu.conf]` and `enable_addons: True`
+to `KlipperScreen.conf`, and hides its files from KlipperScreen's
+`git status`. It never edits `printer.cfg`. Then restart KlipperScreen:
 
-1. Add the companion macros to `printer.cfg`, **after** the INDX includes,
-   and restart Klipper:
-
-   ```
-   [include indx_companion.cfg]
-   ```
-
-2. Restart KlipperScreen:
-
-   ```bash
-   sudo systemctl restart KlipperScreen
-   ```
+```bash
+sudo systemctl restart KlipperScreen
+```
 
 The INDX button appears on the main menu and the print menu.
 
-### Mainsail per-tool spools (optional)
+## The macros it uses
 
-Mainsail's Change Spool dialog lists a tool only when its `T<n>` macro
-declares a `spool_id` variable. Add one to each of your tools:
-
-```
-[gcode_macro T0]
-variable_spool_id: None
-gcode: CHANGE_TOOL TOOL=0
-```
-
-The panel and Mainsail then read and write the same assignment
-(`t<n>__spool_id` in `save_variables`), so either UI can assign spools.
-
-### Active spool follows the mounted tool
-
-Moonraker only tracks usage for one active spool. For it to follow
-toolchanges, the INDX macros call `_INDX_TOOLCHANGE_SPOOL`. Upstream INDX
-does not do this yet; until it does, add the call at the end of
-`_RECORD_TOOLCHANGE` in `indx-tc-macros.cfg`:
-
-```
-    {% if 'gcode_macro _INDX_TOOLCHANGE_SPOOL' in printer %}
-        _INDX_TOOLCHANGE_SPOOL TOOL={t}
-    {% endif %}
-```
-
-and after `SAVE_VARIABLE VARIABLE=active_tool VALUE=-1` in
-`_PARK_TOOL_APPLY`:
-
-```
-        {% if 'gcode_macro _INDX_TOOLCHANGE_SPOOL' in printer %}
-            _INDX_TOOLCHANGE_SPOOL TOOL=-1
-        {% endif %}
-```
-
-Without it everything else works; the active spool just stays where it was.
-
-## What the companion macros do
-
-`indx_companion.cfg` holds the Klipper side. The panel only sends G-code;
-Klipper owns the data.
+The panel only sends G-code; Klipper owns the data. These macros are in
+the fork's `indx-cal.cfg`:
 
 | Macro | |
 |---|---|
@@ -100,20 +54,18 @@ Klipper owns the data.
 | `INDX_SET_SPOOL TOOL= SPOOL=` | Assign a Spoolman spool, `SPOOL=0` to unassign. Updates the active spool if the tool is mounted |
 | `INDX_SET_FILAMENT TOOL= [MATERIAL=] [COLOR=]` | Material and colour by hand, shown when no spool is assigned |
 | `INDX_LOAD`, `INDX_UNLOAD`, `INDX_TOGGLE TOOL=` | Tool and material pickers as Klipper prompts; work in Mainsail too |
-| `_INDX_LOAD_PICK TOOL=` | The panel's Load: asks for the material, runs `LOAD_FILAMENT`, records the material |
-| `_INDX_TOOLCHANGE_SPOOL TOOL=` | Hook for the toolchange macros, see above |
+| `_INDX_LOAD_PICK TOOL=` | The panel's Load: asks for the material, then runs `LOAD_FILAMENT` |
+| `_INDX_TOOLCHANGE_SPOOL TOOL=` | Called by the toolchange macros so Moonraker's active spool follows the mounted tool |
 
 Per-tool state lives in `save_variables`: `t<n>_fil_density` (set by
-`LOAD_FILAMENT`; loaded when not null), `t<n>_fil_type`, `t<n>_fil_color`,
-`t<n>__spool_id`. An assigned spool's colour and material win over the
-hand-set ones, which show again once the spool is unassigned.
+`LOAD_FILAMENT`; loaded when not null), `t<n>_fil_type` (recorded by
+`LOAD_FILAMENT`), `t<n>_fil_color`, `t<n>__spool_id`. An assigned spool's
+colour and material win over the hand-set ones, which show again once the
+spool is unassigned.
 
-Only the panel's Load records the material. `LOAD_FILAMENT` typed at the
-console loads fine, and the tile shows `?` until you set the material with
-Colour.
-
-If you already define any of these macros elsewhere, the file included last
-wins option by option. Remove your old copies.
+The fork's `T<n>` macros declare `variable_spool_id`, so Mainsail's Change
+Spool dialog lists them, and the panel and Mainsail read and write the same
+assignment. If you add a tool, give its `T<n>` the same variable.
 
 ## Changing the buttons
 
@@ -145,9 +97,6 @@ managed_services: KlipperScreen klipper
 ```
 
 ## Uninstall
-
-Remove `[include indx_companion.cfg]` from `printer.cfg` and restart
-Klipper first (the installer refuses otherwise), then:
 
 ```bash
 ~/INDX-KlipperScreen-Add-On/install.sh -u

@@ -131,8 +131,11 @@ not decisions. Implementation planning starts from this file.
   from the raw config section (not `get_menu_items`, which fills missing
   options with defaults and would clobber partial overrides). (Mathew's
   choice.)
-- Fork migration: still pending. Remove the fork's copies only after the
-  companion cfg is loaded and verified.
+- **Superseded 2026-09-25: companion cfg scrapped.** Every macro above now
+  lives in Mathew's fork (`indx-cal.cfg`), which the add-on requires for now.
+  `LOAD_FILAMENT` records `t{n}_fil_type` itself; the toolchange macros call
+  `_INDX_TOOLCHANGE_SPOOL` unconditionally. Revisit a companion cfg (or
+  upstream PRs) once the macros are final. (Mathew's choice.)
 
 ## Reference facts (verified 2026-09-24)
 
