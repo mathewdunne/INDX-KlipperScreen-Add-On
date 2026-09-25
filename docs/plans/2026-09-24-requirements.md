@@ -21,8 +21,12 @@ not decisions. Implementation planning starts from this file.
     (like Spool/Colour) with full-width buttons and a one-line "when to use"
     note each: "Seat T<n> by hand" (selected tool), "Remove tool by hand",
     "Reset toolhead". Each an overridable `[menu indx <action>]` entry. Park
-    stays in the action grid. Open: whether Reset gets a confirm dialog, the
-    one exception to "no confirmation dialogs".
+    stays in the action grid.
+  - Recovery details (decided 2026-09-25, implemented): Seat uses the
+    selected tile, no picker. No confirm dialogs on any of the three.
+    Enabled in ready and paused, like the other actions. Icons: warning
+    (footer), lock, arrow-down, refresh. Remove's note says it needs the
+    magnet on the front of the toolhead to unlock.
 - Never: calibration (Mainsail/console only), tool remapping (slicer tool =
   physical dock).
 

@@ -39,6 +39,14 @@ PANEL_CSS = b"""
     border: 1px solid alpha(@text, 0.09);
 }
 .indx-panel .indx-info { padding: 6px 6px 10px; }
+.indx-panel .indx-recovery-card {
+    background-color: mix(@bg, @text, 0.025);
+    border: 1px solid alpha(@text, 0.12);
+    border-radius: 10px;
+    padding: 5px;
+}
+.indx-panel .indx-recovery-card button { min-height: 40px; }
+.indx-panel .indx-recovery-note { margin: 2px 10px 7px; }
 .indx-panel .indx-dim { opacity: 0.7; }
 .indx-panel .indx-badge {
     background-color: #2e7d32;
@@ -82,7 +90,28 @@ ACTIONS = {
         "params": '{"script": "INDX_SET_FILAMENT TOOL={tool} MATERIAL={material} COLOR={color}"}',
     },
     "park": {"name": "Park", "icon": "toolchanger", "params": '{"script": "PARK_TOOL"}'},
+    "seat": {
+        "name": "Seat T{tool} by hand",
+        "icon": "lock",
+        "params": '{"script": "MANUAL_TOOL_SEAT TOOL={tool}"}',
+    },
+    "remove": {"name": "Remove tool by hand", "icon": "arrow-down", "params": '{"script": "MANUAL_TOOL_REMOVE"}'},
+    "reset": {"name": "Reset toolhead", "icon": "refresh", "params": '{"script": "MANUAL_TOOLHEAD_RESET"}'},
 }
+
+# Recovery sub-view: button order and the note under each.
+RECOVERY = [
+    (
+        "seat",
+        "Tool placed on the head by hand? Lock the latch and record it as T{tool}.",
+    ),
+    (
+        "remove",
+        "Use a magnet on the front of the toolhead to unlock. Opens the latch "
+        "for removal and clears the active tool.",
+    ),
+    ("reset", "Tool state is wrong but the head is already empty. Does not move the latch."),
+]
 
 PALETTE = [
     "FFFFFF", "C0C0C0", "808080", "000000", "E53935", "FB8C00", "FDD835", "C0CA33",
@@ -195,16 +224,25 @@ class Panel(ScreenPanel):
         self.tiles = []
         self.subview = None
         self.last_state = None
+        self.recovery_buttons = {}
+        self.recovery_tool = None
 
         self.grid = Gtk.Grid(row_homogeneous=True, column_homogeneous=True, hexpand=True, vexpand=True)
         self.side = self._build_side()
 
         self.count = small_label(xalign=1.0, dim=True)
         self.count.set_margin_end(6)
+        self.recovery = self._gtk.Button("warning", "Recovery", None, self.bts, Gtk.PositionType.LEFT, 1)
+        self.recovery.set_hexpand(False)
+        self.recovery.set_vexpand(False)
+        self.recovery.connect("clicked", self._show_recovery)
+        footer = Gtk.Box(spacing=5)
+        footer.pack_start(self.recovery, False, False, 0)
+        footer.pack_start(self.count, True, True, 0)
 
         left = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, hexpand=True, vexpand=True)
         left.pack_start(self.grid, True, True, 0)
-        left.pack_start(self.count, False, False, 2)
+        left.pack_start(footer, False, False, 2)
 
         vertical = self._screen.vertical_mode
         self.main = Gtk.Box(
@@ -232,10 +270,11 @@ class Panel(ScreenPanel):
             actions[key] = action
         return actions
 
-    def _action_button(self, key):
+    def _action_button(self, key, tool=None):
         action = self.actions[key]
+        name = action["name"].replace("{tool}", str(tool)) if tool is not None else action["name"]
         button = self._gtk.Button(
-            action["icon"], action["name"], None, self.bts, Gtk.PositionType.LEFT, 1
+            action["icon"], name, None, self.bts, Gtk.PositionType.LEFT, 1
         )
         return button
 
@@ -264,7 +303,11 @@ class Panel(ScreenPanel):
         }
 
     def _can_act(self):
-        return self._printer.state in ("ready", "paused")
+        return (
+            self._printer.state in ("ready", "paused")
+            and self.selected is not None
+            and 0 <= self.selected < self.tool_count
+        )
 
     # ----- layout -----
 
@@ -353,6 +396,9 @@ class Panel(ScreenPanel):
             self.tool_count = count
             self._build_tiles()
         if not self.tool_count:
+            self.selected = None
+            for button in (*self.buttons.values(), self.recovery, *self.recovery_buttons.values()):
+                button.set_sensitive(False)
             self.side_title.set_markup("<b>No INDX tools</b>")
             self.side_detail.set_text("gcode_macro TOOL_POSITIONS not found")
             return
@@ -364,6 +410,12 @@ class Panel(ScreenPanel):
         for n, tile in enumerate(self.tiles):
             self._update_tile(n, tile, self._tool(n))
         self._update_side()
+        if self.subview == "recovery":
+            if self.selected != self.recovery_tool:
+                self._show_main()
+            else:
+                for button in self.recovery_buttons.values():
+                    button.set_sensitive(self._can_act())
         self.count.set_markup(f"<small>Toolchanges: {svv.get('toolchange_count', 0)}</small>")
 
     def _update_tile(self, n, tile, tool):
@@ -420,6 +472,7 @@ class Panel(ScreenPanel):
         for key in ("load", "unload", "filament"):
             self.buttons[key].set_sensitive(can)
         self.buttons["spool"].set_sensitive(can and self._printer.spoolman)
+        self.recovery.set_sensitive(can)
 
     # ----- KlipperScreen hooks -----
 
@@ -463,6 +516,9 @@ class Panel(ScreenPanel):
         self.refresh()
 
     def _run(self, widget, key, **values):
+        # A sub-view may still be open when the printer starts printing.
+        if not self._can_act():
+            return
         action = self.actions[key]
         values.setdefault("tool", self.selected)
         params = action["params"]
@@ -661,4 +717,44 @@ class Panel(ScreenPanel):
         self._run(
             widget, "filament", material=choice["material"] or "", color=choice["color"] or ""
         )
+        self._show_main()
+
+    def _show_recovery(self, widget):
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        box.set_margin_start(6)
+        box.set_margin_end(6)
+        box.set_margin_bottom(6)
+        self.recovery_tool = self.selected
+        self.recovery_buttons = {}
+        heading = small_label(lines=2, dim=True)
+        heading.set_markup(
+            f"<small>Selected tool: <b>T{self.selected}</b>. "
+            "To change tools, go back and select a tile.</small>"
+        )
+        box.pack_start(heading, False, False, 2)
+        can = self._can_act()
+        for key, note in RECOVERY:
+            card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+            card.get_style_context().add_class("indx-recovery-card")
+            button = self._action_button(key, self.selected)
+            button.set_vexpand(False)
+            button.set_sensitive(can)
+            button.connect("clicked", self._recover, key)
+            self.recovery_buttons[key] = button
+            label = small_label(lines=2, dim=True)
+            # Instructions must remain readable on narrow displays.
+            label.set_ellipsize(Pango.EllipsizeMode.NONE)
+            label.get_style_context().add_class("indx-recovery-note")
+            label.set_markup(f"<small>{esc(note.replace('{tool}', str(self.selected)))}</small>")
+            card.pack_start(button, False, False, 0)
+            card.pack_start(label, False, False, 0)
+            box.pack_start(card, False, False, 0)
+        scroll = self._gtk.ScrolledWindow()
+        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        scroll.add(box)
+        self._show(scroll, "recovery")
+
+    def _recover(self, widget, key):
+        if self.selected == self.recovery_tool:
+            self._run(widget, key)
         self._show_main()

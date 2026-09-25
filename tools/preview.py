@@ -18,7 +18,7 @@ def main():
                         default=ROOT.parent / "Screen Apps" / "KlipperScreen")
     parser.add_argument("--fixture", type=Path, default=ROOT / "tools" / "preview-state.json")
     parser.add_argument("--output", type=Path, default=ROOT / "preview" / "main.png")
-    parser.add_argument("--view", choices=("main", "spool", "colour", "home"), default="main")
+    parser.add_argument("--view", choices=("main", "spool", "colour", "recovery", "home"), default="main")
     parser.add_argument("--state", choices=("ready", "printing", "paused"), default="ready")
     parser.add_argument("--tools", type=int, choices=range(1, 9), default=8)
     parser.add_argument("--selected", type=int, default=0)
@@ -127,6 +127,8 @@ def main():
         panel._show_spools(None)
     elif args.view == "colour":
         panel._show_filament(None)
+    elif args.view == "recovery":
+        panel._show_recovery(None)
     window.show_all()
 
     result = {"failed": False}

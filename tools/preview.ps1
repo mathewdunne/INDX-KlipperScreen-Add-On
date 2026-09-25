@@ -1,6 +1,6 @@
 param(
     [switch]$Interactive,
-    [ValidateSet('main', 'spool', 'colour', 'home')][string]$View = 'main',
+    [ValidateSet('main', 'spool', 'colour', 'recovery', 'home')][string]$View = 'main',
     [ValidateSet('ready', 'printing', 'paused')][string]$State = 'ready',
     [ValidateRange(1, 8)][int]$Tools = 8,
     [int]$Selected = 0,

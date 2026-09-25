@@ -20,6 +20,7 @@ Run these commands from the repository root in PowerShell:
 ./tools/preview.ps1                         # screenshot: preview/main-ready.png
 ./tools/preview.ps1 -View spool
 ./tools/preview.ps1 -View colour
+./tools/preview.ps1 -View recovery
 ./tools/preview.ps1 -State printing
 ./tools/preview.ps1 -Interactive            # clickable GTK window
 ./tools/preview.ps1 -Tools 4 -Selected 2 -NoSpoolman

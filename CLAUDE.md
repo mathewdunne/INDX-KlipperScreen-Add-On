@@ -81,7 +81,9 @@ All state lives in Klipper, read via `self._printer.get_stat`:
 
 The macros the panel calls (`INDX_SET_SPOOL`, `INDX_SET_FILAMENT`,
 `_INDX_LOAD_PICK`, `UNLOAD_FILAMENT`, `PARK_TOOL`, `T<n>`) live in Mathew's
-INDX fork (`indx-cal.cfg`), not in this repo and not upstream Bondtech. A
+INDX fork (`indx-cal.cfg`), not in this repo and not upstream Bondtech. The
+Recovery button's `MANUAL_TOOL_SEAT` is also supplied by the fork;
+`MANUAL_TOOL_REMOVE` and `MANUAL_TOOLHEAD_RESET` are upstream Bondtech's. A
 change to what a button does is usually a macro change in the fork
 (`../INDX-repo`), not a panel change.
 
@@ -105,8 +107,9 @@ string JSON-escaped, then parses it and calls `send_method`.
 ### Panel structure
 
 `Panel.main` (tile grid left, selected-tool side panel right; stacked in
-vertical mode) is swapped out of `self.content` by `_show` for the Spool and
-Colour sub-views; `back()` and `deactivate()` return to it. `refresh()`
+vertical mode) is swapped out of `self.content` by `_show` for the Spool,
+Colour and Recovery sub-views (Recovery opens from the footer under the
+grid); `back()` and `deactivate()` return to it. `refresh()`
 rebuilds tiles only when `tool_count` changes, otherwise updates in place.
 Actions are enabled only in `ready` and `paused` (view-only while printing).
 Styling is a panel-scoped CSS provider (`.indx-panel`) using theme colours

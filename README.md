@@ -13,6 +13,10 @@ Out of tree: stock KlipperScreen, no fork.
 - The selected tool's actions: Pick up, Load, Unload, Spool, Colour. Pick up
   becomes Park when the selected tool is the mounted one. The toolchange
   count sits under the grid.
+- Recovery, under the grid: Seat the selected tool by hand
+  (`MANUAL_TOOL_SEAT`), Remove tool by hand (`MANUAL_TOOL_REMOVE`, needs a
+  magnet on the front of the toolhead to unlock) and Reset toolhead
+  (`MANUAL_TOOLHEAD_RESET`). No confirmation: they run on tap.
 - View only while printing; everything works while paused.
 - When a load finishes, the screen opens the Spool picker for that tool,
   or the Colour picker without Spoolman. Back skips it.
@@ -72,6 +76,10 @@ the fork's `indx-cal.cfg`:
 | `_LOAD_FILAMENT_FEED` | The feed after `LOAD_FILAMENT`'s Continue button; ends with `action:indx_loaded <tool>`, which opens the picker |
 | `_INDX_TOOLCHANGE_SPOOL TOOL=` | Called by the toolchange macros so Moonraker's active spool follows the mounted tool |
 
+The Recovery buttons use `indx-cal.cfg`: `MANUAL_TOOL_SEAT TOOL=` is supplied
+by the fork; `MANUAL_TOOL_REMOVE` and `MANUAL_TOOLHEAD_RESET` are Bondtech
+macros retained in the fork.
+
 Per-tool state lives in `save_variables`: `t<n>_fil_density` (set by
 `LOAD_FILAMENT`; loaded when not null), `t<n>_fil_type` (recorded by
 `LOAD_FILAMENT`), `t<n>_fil_color`, `t<n>__spool_id`. An assigned spool's
@@ -87,7 +95,8 @@ assignment. If you add a tool, give its `T<n>` the same variable.
 Every button runs a Moonraker method with parameters, `printer.gcode.script`
 by default. Override one in `KlipperScreen.conf` with a `[menu indx <action>]`
 section; options you leave out keep their defaults. The actions are
-`pickup`, `load`, `unload`, `spool`, `filament` and `park`. In `params` the
+`pickup`, `load`, `unload`, `spool`, `filament`, `park`, `seat`, `remove`
+and `reset`. In `params` the
 panel replaces `{tool}`, `{spool}`, `{material}` and `{color}`:
 
 ```
