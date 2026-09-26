@@ -1,25 +1,29 @@
 # INDX KlipperScreen add-on
 
-A KlipperScreen panel for the Bondtech INDX toolchanger: every tool at a
-glance, and pick up, park, load, unload, Spoolman spool and colour per tool.
-Out of tree: stock KlipperScreen, no fork.
+A tool panel for the Bondtech INDX toolchanger. See up to eight tools at a
+glance, then pick up, park, load, unload, or change a tool's spool and colour.
+It runs as an add-on to stock KlipperScreen.
 
-![INDX panel](docs/panel.png)
+![INDX tool overview in the material-dark theme, showing eight tools and actions for T0](docs/screenshots/tool-overview-dark.png)
 
-- Up to 8 tools, count read from `gcode_macro TOOL_POSITIONS.tool_count`.
-- Each tile shows the filament colour and material, and the Spoolman spool
-  (name, ID, remaining weight) when one is assigned. The mounted tool
-  carries an **ON** badge.
-- The selected tool's actions: Pick up, Load, Unload, Spool, Colour. Pick up
-  becomes Park when the selected tool is the mounted one. The toolchange
-  count sits under the grid.
-- Recovery, under the grid: Seat the selected tool by hand
-  (`MANUAL_TOOL_SEAT`), Remove tool by hand (`MANUAL_TOOL_REMOVE`, needs a
-  magnet on the front of the toolhead to unlock) and Reset toolhead
-  (`MANUAL_TOOLHEAD_RESET`). No confirmation: they run on tap.
-- View only while printing; everything works while paused.
-- When a load finishes, the screen opens the Spool picker for that tool,
-  or the Colour picker without Spoolman. Back skips it.
+*Offline preview with mock printer and Spoolman data. The surrounding title
+and navigation are a preview shell; your KlipperScreen theme may look different.*
+
+### More screens
+
+| Light theme | Spool picker |
+| --- | --- |
+| [![Eight-tool overview in the material-light theme](docs/screenshots/tool-overview-light.png)](docs/screenshots/tool-overview-light.png) | [![Spool picker with search and unassign controls](docs/screenshots/spool-picker.png)](docs/screenshots/spool-picker.png) |
+| **Material and colour** | **Recovery** |
+| [![Material choices and colour swatches for the selected tool](docs/screenshots/colour-picker.png)](docs/screenshots/colour-picker.png) | [![Controls to seat, remove, or reset a tool by hand](docs/screenshots/recovery.png)](docs/screenshots/recovery.png) |
+
+- Each tool tile shows its material, colour, and assigned Spoolman spool
+  (name, ID, remaining weight). **ON** marks the mounted tool.
+- Select a tile for Pick up/Park, Load, Unload, Spool, and Colour. A completed
+  load opens the spool picker, or the colour picker when Spoolman is absent.
+- Recovery offers manual seat, remove, and toolhead reset actions. They run
+  immediately when tapped; manual removal needs a magnet at the toolhead.
+- The panel is view only during a print. Actions remain available while paused.
 
 ## Requirements
 
@@ -30,17 +34,10 @@ Out of tree: stock KlipperScreen, no fork.
   there. `[save_variables]` and `[respond]`, as INDX already requires.
 - Optional: Moonraker's `[spoolman]` component, for spool assignment.
 
-## Local UI preview
-
-Render screenshots or open a clickable GTK preview with mock printer data.
-See [setup and usage](tools/preview.md).
-
 ## Install on the printer
 
 ```bash
 cd ~ && git clone https://github.com/mathewdunne/INDX-KlipperScreen-Add-On.git
-```
-```bash
 ~/INDX-KlipperScreen-Add-On/install.sh
 ```
 
@@ -55,57 +52,16 @@ sudo systemctl restart KlipperScreen
 
 The INDX button appears on the main menu and the print menu.
 
-The menu icon uses dark lines for `material-light` and white lines for the
-other bundled themes, keeping its maroon accents in both. After updating
-an existing installation, rerun `install.sh` once to update the theme links,
-then restart KlipperScreen. Subsequent theme changes select the matching
-icon automatically.
+After updating an existing installation, rerun `install.sh` once to update
+the theme icons, then restart KlipperScreen.
 
-## The macros it uses
+For macros, saved variables, and button overrides, see the
+[configuration reference](docs/configuration.md).
 
-The panel only sends G-code; Klipper owns the data. These macros are in
-the fork's `indx-cal.cfg`:
+## Local UI preview
 
-| Macro | |
-|---|---|
-| `UNLOAD_FILAMENT TOOL= [TEMP=]` | Ram and retract 85 mm (Prusa Core ONE sequence plus 30 mm). Also forgets the tool's material, colour and spool |
-| `INDX_SET_SPOOL TOOL= SPOOL=` | Assign a Spoolman spool, `SPOOL=0` to unassign. Updates the active spool if the tool is mounted |
-| `INDX_SET_FILAMENT TOOL= [MATERIAL=] [COLOR=]` | Material and colour by hand, shown when no spool is assigned |
-| `INDX_LOAD`, `INDX_UNLOAD`, `INDX_TOGGLE TOOL=` | Tool and material pickers as Klipper prompts; work in Mainsail too |
-| `_INDX_LOAD_PICK TOOL=` | The panel's Load: asks for the material, then runs `LOAD_FILAMENT` |
-| `_LOAD_FILAMENT_FEED` | The feed after `LOAD_FILAMENT`'s Continue button; ends with `action:indx_loaded <tool>`, which opens the picker |
-| `_INDX_TOOLCHANGE_SPOOL TOOL=` | Called by the toolchange macros so Moonraker's active spool follows the mounted tool |
-
-The Recovery buttons use `indx-cal.cfg`: `MANUAL_TOOL_SEAT TOOL=` is supplied
-by the fork; `MANUAL_TOOL_REMOVE` and `MANUAL_TOOLHEAD_RESET` are Bondtech
-macros retained in the fork.
-
-Per-tool state lives in `save_variables`: `t<n>_fil_density` (set by
-`LOAD_FILAMENT`; loaded when not null), `t<n>_fil_type` (recorded by
-`LOAD_FILAMENT`), `t<n>_fil_color`, `t<n>__spool_id`. An assigned spool's
-colour and material win over the hand-set ones, which show again once the
-spool is unassigned.
-
-The fork's `T<n>` macros declare `variable_spool_id`, so Mainsail's Change
-Spool dialog lists them, and the panel and Mainsail read and write the same
-assignment. If you add a tool, give its `T<n>` the same variable.
-
-## Changing the buttons
-
-Every button runs a Moonraker method with parameters, `printer.gcode.script`
-by default. Override one in `KlipperScreen.conf` with a `[menu indx <action>]`
-section; options you leave out keep their defaults. The actions are
-`pickup`, `load`, `unload`, `spool`, `filament`, `park`, `seat`, `remove`
-and `reset`. In `params` the
-panel replaces `{tool}`, `{spool}`, `{material}` and `{color}`:
-
-```
-[menu indx unload]
-params: {"script": "MY_UNLOAD TOOL={tool}"}
-```
-
-All defaults are listed in `klipperscreen/indx_menu.conf`. Do not edit that
-file itself: it is a symlink into this repo, and local edits block updates.
+Render your own screenshots or open a clickable GTK preview with mock data.
+See [preview setup and usage](tools/preview.md).
 
 ## Updates with Moonraker
 
