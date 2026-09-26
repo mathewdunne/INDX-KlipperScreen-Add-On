@@ -109,7 +109,9 @@ string JSON-escaped, then parses it and calls `send_method`.
 `Panel.main` (tile grid left, selected-tool side panel right; stacked in
 vertical mode) is swapped out of `self.content` by `_show` for the Spool,
 Colour and Recovery sub-views (Recovery opens from the footer under the
-grid); `back()` and `deactivate()` return to it. `refresh()`
+grid); `back()` and `deactivate()` return to it. The footer's Temperature
+button is not a sub-view: it opens the stock `temperature` panel with
+`show_panel`, whose panel stack makes Back return to INDX. `refresh()`
 rebuilds tiles only when `tool_count` changes, otherwise updates in place.
 Actions are enabled only in `ready` and `paused` (view-only while printing).
 Styling is a panel-scoped CSS provider (`.indx-panel`) using theme colours

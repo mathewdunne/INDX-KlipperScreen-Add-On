@@ -4,7 +4,7 @@ A tool panel for the Bondtech INDX toolchanger. See up to eight tools at a
 glance, then pick up, park, load, unload, or change a tool's spool and colour.
 It runs as an add-on to stock KlipperScreen.
 
-![INDX tool overview in the material-dark theme, showing eight tools and actions for T0](docs/screenshots/tool-overview-dark.png)
+![INDX tool overview in the z-bolt theme, showing eight tools and actions for T0](docs/screenshots/tool-overview-dark.png)
 
 *Offline preview with mock printer and Spoolman data. The surrounding title
 and navigation are a preview shell; your KlipperScreen theme may look different.*
@@ -23,6 +23,7 @@ and navigation are a preview shell; your KlipperScreen theme may look different.
   load opens the spool picker, or the colour picker when Spoolman is absent.
 - Recovery offers manual seat, remove, and toolhead reset actions. They run
   immediately when tapped; manual removal needs a magnet at the toolhead.
+- Temperature opens the stock Temperature panel; Back returns to INDX.
 - The panel is view only during a print. Actions remain available while paused.
 
 ## Requirements

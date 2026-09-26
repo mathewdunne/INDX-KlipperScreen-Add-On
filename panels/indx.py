@@ -258,8 +258,14 @@ class Panel(ScreenPanel):
         self.recovery.set_hexpand(False)
         self.recovery.set_vexpand(False)
         self.recovery.connect("clicked", self._show_recovery)
+        # Stock panel, pushed onto KlipperScreen's panel stack so Back returns here
+        temperature = self._gtk.Button("heat-up", "Temperature", "color1", self.bts, Gtk.PositionType.LEFT, 1)
+        temperature.set_hexpand(False)
+        temperature.set_vexpand(False)
+        temperature.connect("clicked", lambda w: self._screen.show_panel("temperature", "Temperature"))
         footer = Gtk.Box(spacing=5)
         footer.pack_start(self.recovery, False, False, 0)
+        footer.pack_start(temperature, False, False, 0)
         footer.pack_start(self.count, True, True, 0)
 
         left = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, hexpand=True, vexpand=True)
