@@ -1,9 +1,22 @@
 # Configuration reference
 
+## Pick an integration path
+
+The supplied button defaults work with the `indx/*.cfg` files in
+[mathewdunne/INDX](https://github.com/mathewdunne/INDX). Use that fork if you
+want its load flow, per-tool material and colour state, Spoolman helpers, and
+recovery macros. They do not target unmodified upstream Bondtech macros.
+
+You can also keep your existing INDX macros. The panel does not require macro
+names to be changed: override each button you use in `KlipperScreen.conf` so
+it sends your G-code instead. The panel still reads its tool details from
+Klipper, so ensure your macro setup maintains the state described below if you
+want those details shown.
+
 ## Macros the panel uses
 
-The panel only sends G-code; Klipper owns the data. These macros are in the
-INDX fork's `indx-cal.cfg`:
+The panel only sends G-code; Klipper owns the data. These are the default
+macros, provided by the INDX fork's `indx-cal.cfg`:
 
 | Macro | Purpose |
 | --- | --- |
@@ -36,7 +49,8 @@ by default. Override one in `KlipperScreen.conf` with a `[menu indx <action>]`
 section; options you leave out keep their defaults. The actions are
 `pickup`, `load`, `unload`, `spool`, `filament`, `park`, `seat`, `remove`
 and `reset`. In `params` the panel replaces `{tool}`, `{spool}`, `{material}`
-and `{color}`:
+and `{color}`. For example, this changes only the Unload button to call your
+own macro:
 
 ```ini
 [menu indx unload]
