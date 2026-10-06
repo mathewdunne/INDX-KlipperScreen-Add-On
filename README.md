@@ -54,9 +54,10 @@ ones depends on your setup:
 
 ## Requirements
 
-- **KlipperScreen with add-on support.** Add-on loading was merged into
-  KlipperScreen on 2026-09-13 (PR #1770, commit `8abe645c`), so you need that
-  or anything newer. `install.sh` checks for you.
+- **KlipperScreen v0.4.7-184 or newer**, the version Mainsail's update panel
+  shows. That build added add-on loading (PR #1770, commit `8abe645c`,
+  2026-09-13); the tagged `v0.4.7` release is too old. `install.sh` checks
+  for you.
 - **INDX macros**, as described above. The panel reads tool data from Klipper's
   `[save_variables]`, and the fork also needs `[respond]`. If you use your own
   macros, they need to maintain compatible state for the tiles to fill in.
