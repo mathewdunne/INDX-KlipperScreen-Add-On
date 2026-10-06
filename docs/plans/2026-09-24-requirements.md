@@ -1,9 +1,8 @@
 # INDX KlipperScreen add-on: v1 requirements
 
-Gathered 2026-09-24 by questioning Mathew (requirements session from
-`notes/klipperscreen-addon-handoff.md` in the parent workspace). Everything
-under "Decided" is his answer. "Open design risks" are Claude's findings,
-not decisions. Implementation planning starts from this file.
+Gathered 2026-09-24. Everything under "Decided" is a maintainer decision.
+The design risks further down were findings, resolved during implementation.
+Implementation planning starts from this file.
 
 ## Decided
 
@@ -105,7 +104,7 @@ not decisions. Implementation planning starts from this file.
   - per-tool `spool_id` and the active spool following toolchanges;
   - `INDX_LOAD`, `INDX_UNLOAD`, `INDX_TOGGLE` prompt macros;
   - new set-spool and set-colour/material macros for the panel.
-- Mathew's fork (`mathewdunne/INDX`) drops its copies once the companion cfg
+- The `mathewdunne/INDX` fork drops its copies once the companion cfg
   works.
 - Installer symlinks it into `printer_data/config`. The user adds the
   `[include]` to `printer.cfg` themselves; the installer never edits
@@ -131,24 +130,23 @@ not decisions. Implementation planning starts from this file.
 - Per-tool `spool_id`: the companion stores `t<n>__spool_id` in
   save_variables (Mainsail's name) and mirrors it into `T<n>.spool_id` only
   when that variable exists. README tells users to add
-  `variable_spool_id: None` to their `T<n>`. (Mathew's choice.)
+  `variable_spool_id: None` to their `T<n>`.
 - Active-spool follow: companion defines `_INDX_TOOLCHANGE_SPOOL TOOL=n`
   (`-1` = nothing mounted). The fork's `_RECORD_TOOLCHANGE` and
   `_PARK_TOOL_APPLY` call it if defined; offered upstream as a PR.
-  (Mathew's choice.)
 - **Changed from "Configurability" above:** the shipped `indx_menu.conf`
   holds only the two entry buttons. KlipperScreen reads an `[include]`d file
   after `KlipperScreen.conf`, so shipped `[menu indx ...]` defaults would
   beat the user's overrides. Defaults live in `panels/indx.py`; a
   `[menu indx <action>]` in `KlipperScreen.conf` overrides per option, read
   from the raw config section (not `get_menu_items`, which fills missing
-  options with defaults and would clobber partial overrides). (Mathew's
-  choice.)
+  options with defaults and would clobber partial overrides).
 - **Superseded 2026-09-25: companion cfg scrapped.** Every macro above now
-  lives in Mathew's fork (`indx-cal.cfg`), which the add-on requires for now.
+  lives in the `mathewdunne/INDX` fork (`indx-cal.cfg`), which the add-on
+  requires for now.
   `LOAD_FILAMENT` records `t{n}_fil_type` itself; the toolchange macros call
   `_INDX_TOOLCHANGE_SPOOL` unconditionally. Revisit a companion cfg (or
-  upstream PRs) once the macros are final. (Mathew's choice.)
+  upstream PRs) once the macros are final.
 
 ## Reference facts (verified 2026-09-24)
 

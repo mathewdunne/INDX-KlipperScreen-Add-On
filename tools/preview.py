@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--klipperscreen", type=Path,
-                        default=ROOT.parent / "Screen Apps" / "KlipperScreen")
+                        default=ROOT.parent / "KlipperScreen")
     parser.add_argument("--fixture", type=Path, default=ROOT / "tools" / "preview-state.json")
     parser.add_argument("--output", type=Path, default=ROOT / "preview" / "main.png")
     parser.add_argument("--view", choices=("main", "spool", "colour", "recovery", "home"), default="main")
@@ -89,7 +89,7 @@ def main():
     if args.view == "home":
         from preview_home import build_home
         panel = build_home(screen, args.klipperscreen, ROOT, args.theme)
-        title.set_text("Voron — offline home preview")
+        title.set_text("INDX — offline home preview")
     else:
         spec = importlib.util.spec_from_file_location("indx_preview_panel", ROOT / "panels" / "indx.py")
         module = importlib.util.module_from_spec(spec)

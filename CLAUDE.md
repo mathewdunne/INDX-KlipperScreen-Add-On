@@ -6,9 +6,7 @@ Out-of-tree KlipperScreen add-on for the Bondtech INDX toolchanger: one panel
 showing every tool (colour, material, Spoolman spool, mounted badge) plus
 per-tool Pick up / Park / Load / Unload / Spool / Colour. Stock KlipperScreen,
 no fork. Public repo (`origin` = github.com/mathewdunne/INDX-KlipperScreen-Add-On);
-the printer's `~/INDX-KlipperScreen-Add-On` is a clone that updates with `git pull`.
-Printer access, sync workflow and boundaries are in the parent workspace's
-`CLAUDE.md`.
+on a printer, `~/INDX-KlipperScreen-Add-On` is a clone that updates with `git pull`.
 
 ## Commands
 
@@ -16,7 +14,7 @@ No build, lint or test suite. Verification is the offline preview, then the
 printer.
 
 Preview (PowerShell, repo root; runs in WSL Ubuntu, needs a KlipperScreen
-checkout at `../Screen Apps/KlipperScreen` or `-KlipperScreen <path>`):
+checkout at `../KlipperScreen` or `-KlipperScreen <path>`):
 
 ```powershell
 ./tools/preview.ps1                                   # preview/main-ready.png
@@ -80,12 +78,12 @@ All state lives in Klipper, read via `self._printer.get_stat`:
   (`Panel._tool`).
 
 The macros the panel calls (`INDX_SET_SPOOL`, `INDX_SET_FILAMENT`,
-`_INDX_LOAD_PICK`, `UNLOAD_FILAMENT`, `PARK_TOOL`, `T<n>`) live in Mathew's
-INDX fork (`indx-cal.cfg`), not in this repo and not upstream Bondtech. The
-Recovery button's `MANUAL_TOOL_SEAT` is also supplied by the fork;
+`_INDX_LOAD_PICK`, `UNLOAD_FILAMENT`, `PARK_TOOL`, `T<n>`) live in the
+mathewdunne/INDX fork (`indx-cal.cfg`), not in this repo and not upstream
+Bondtech. The Recovery button's `MANUAL_TOOL_SEAT` is also supplied by the fork;
 `MANUAL_TOOL_REMOVE` and `MANUAL_TOOLHEAD_RESET` are upstream Bondtech's. A
-change to what a button does is usually a macro change in the fork
-(`../INDX-repo`), not a panel change.
+change to what a button does is usually a macro change in the fork,
+not a panel change.
 
 ### Button configuration
 
@@ -130,6 +128,6 @@ bottom underline; `install_style` darkens it when the theme's `@bg` is light.
   printer.
 - `docs/plans/2026-09-24-requirements.md` records the v1 decisions and the
   planned phase 2 (recovery sub-view, top-bar tool badge). Check it before
-  changing behaviour; it says which choices were Mathew's.
+  changing behaviour; it says which choices were deliberate.
 - Keep `README.md` in sync when changing actions, macros used, or install
   steps; it is the public user documentation.

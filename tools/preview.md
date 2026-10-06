@@ -6,8 +6,9 @@ Spoolman server is needed. Actions print their method and parameters to the
 terminal; they do not execute macros or change the fixture. Tool selection,
 spool search and colour/material selection work in the interactive window.
 
-On Windows, use Ubuntu under WSL (WSLg for interactive windows). Install the
-rendering dependencies once inside Ubuntu:
+On Windows, use Ubuntu under WSL (WSLg for interactive windows); the launcher
+runs in your default WSL distro. Install the rendering dependencies once
+inside Ubuntu:
 
 ```bash
 sudo apt-get update
@@ -28,7 +29,7 @@ Run these commands from the repository root in PowerShell:
 ./tools/preview.ps1 -View home -Theme material-light
 ```
 
-The launcher defaults to the adjacent `../Screen Apps/KlipperScreen` checkout;
+The launcher defaults to the adjacent `../KlipperScreen` checkout;
 use `-KlipperScreen 'C:/path/to/KlipperScreen'` for another checkout. It also
 accepts `-Width`, `-Height` and `-Theme`. Edit the fixture JSON for different
 materials, spool names, weights and mounted tools. Rerun after editing the

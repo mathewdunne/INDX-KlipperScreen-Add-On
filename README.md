@@ -94,8 +94,11 @@ type: git_repo
 path: ~/INDX-KlipperScreen-Add-On
 origin: https://github.com/mathewdunne/INDX-KlipperScreen-Add-On.git
 primary_branch: main
-managed_services: KlipperScreen klipper
+managed_services: KlipperScreen
 ```
+
+The update manager only pulls. If a release note says to rerun `install.sh`,
+run it once after updating.
 
 Or by hand: pull, rerun the installer to refresh the links and icons, and
 restart KlipperScreen.
